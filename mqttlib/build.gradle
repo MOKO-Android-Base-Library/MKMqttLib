@@ -5,13 +5,13 @@ plugins {
 
 android {
     namespace 'com.moko.lib.mqtt'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
-        minSdk 26
-        targetSdk 34
+        minSdk 28
+        targetSdk 35
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.0.1"
     }
 
     buildTypes {
@@ -54,7 +54,7 @@ publishing {
             // 这里头是artifacts的配置信息，不填会采用默认的
             groupId = 'com.github.MOKO-Android-Base-Library'
             artifactId = 'MKMqttLib'
-            version = '1.0.0'
+            version = '1.0.1'
 
             afterEvaluate {
                 // 使用 release 变体的组件（自动包含依赖信息）
@@ -66,11 +66,11 @@ publishing {
 
 
 dependencies {
-    api 'com.google.code.gson:gson:2.10.1'
+    api 'com.google.code.gson:gson:2.11.0'
     api 'org.greenrobot:eventbus:3.3.1'
     api 'com.elvishew:xlog:1.6.1'
     api 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
     //new mqtt library that supports android 12
-    api 'com.github.hannesa2:paho.mqtt.android:4.2'
+    api 'com.github.hannesa2:paho.mqtt.android:4.4.1'
     api 'org.bouncycastle:bcpkix-jdk15on:1.67'
 }
