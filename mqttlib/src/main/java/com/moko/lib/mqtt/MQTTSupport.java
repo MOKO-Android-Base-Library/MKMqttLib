@@ -225,7 +225,7 @@ public class MQTTSupport {
                     case 3:
                         // 双向验证
                         try {
-                            connOpts.setSocketFactory(getSocketFactory(mqttConfig.caPath, mqttConfig.clientKeyPath, mqttConfig.clientCertPath));
+                            connOpts.setSocketFactory(getSocketFactory(mqttConfig.caPath, mqttConfig.clientKeyPath, mqttConfig.clientKeyPassword, mqttConfig.clientCertPath));
                             connOpts.setHttpsHostnameVerificationEnabled(false);
                         } catch (FileNotFoundException fileNotFoundException) {
                             if (mqttAndroidClient != null) {
@@ -373,7 +373,7 @@ public class MQTTSupport {
      * @return
      * @throws Exception
      */
-    private SSLSocketFactory getSocketFactory(String caFile, String clientKeyFile, String clientCertFile) throws Exception {
+    private SSLSocketFactory getSocketFactory(String caFile, String clientKeyFile, String clientKeyPassword, String clientCertFile) throws Exception {
 
         FileInputStream ca = new FileInputStream(caFile);
         FileInputStream clientCert = new FileInputStream(clientCertFile);
@@ -400,7 +400,7 @@ public class MQTTSupport {
         PEMParser pemParser = new PEMParser(new InputStreamReader(clientKey));
         Object object = pemParser.readObject();
         PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
-                .build("".toCharArray());
+                .build(clientKeyPassword.toCharArray());
         JcaPEMKeyConverter converter;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             //适配Android P及以后版本，否则报错

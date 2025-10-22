@@ -18,6 +18,7 @@ public class AppMQTTConfig implements Serializable {
     public String password = "";
     public String caPath;
     public String clientKeyPath;
+    public String clientKeyPassword;
     public String clientCertPath;
     public String topicSubscribe;
     public String topicPublish;
