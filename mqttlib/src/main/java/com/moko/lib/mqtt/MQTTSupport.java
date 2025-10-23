@@ -28,7 +28,10 @@ import org.bouncycastle.openssl.PEMEncryptedKeyPair;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
+import org.bouncycastle.operator.InputDecryptorProvider;
+import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -399,19 +402,20 @@ public class MQTTSupport {
         // load client private key
         PEMParser pemParser = new PEMParser(new InputStreamReader(clientKey));
         Object object = pemParser.readObject();
-        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
-                .build(clientKeyPassword.toCharArray());
         JcaPEMKeyConverter converter;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            //适配Android P及以后版本，否则报错
-            converter = new JcaPEMKeyConverter();
-        } else {
-            converter = new JcaPEMKeyConverter().setProvider("BC");
-        }
+        //适配Android P及以后版本，否则报错
+        converter = new JcaPEMKeyConverter();
 
         Key key = null;
-        if (object instanceof PEMEncryptedKeyPair) {
+        if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
+            InputDecryptorProvider decProv = new JceOpenSSLPKCS8DecryptorProviderBuilder()
+                    .setProvider("BC")
+                    .build(clientKeyPassword.toCharArray());
+            ((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv);
+        } else if (object instanceof PEMEncryptedKeyPair) {
             XLog.e("Encrypted key - we will use provided password");
+            PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
+                    .build(clientKeyPassword.toCharArray());
             key = converter.getKeyPair(((PEMEncryptedKeyPair) object)
                     .decryptKeyPair(decProv)).getPrivate();
         } else if (object instanceof PrivateKeyInfo) {
