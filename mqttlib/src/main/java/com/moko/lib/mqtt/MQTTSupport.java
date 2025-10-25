@@ -32,6 +32,7 @@ import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -381,6 +382,7 @@ public class MQTTSupport {
         FileInputStream ca = new FileInputStream(caFile);
         FileInputStream clientCert = new FileInputStream(clientCertFile);
         FileInputStream clientKey = new FileInputStream(clientKeyFile);
+        Security.removeProvider("BC");
         Security.addProvider(new BouncyCastleProvider());
         // load CA certificate
         X509Certificate caCert = null;
@@ -402,18 +404,16 @@ public class MQTTSupport {
         // load client private key
         PEMParser pemParser = new PEMParser(new InputStreamReader(clientKey));
         Object object = pemParser.readObject();
-        JcaPEMKeyConverter converter;
-        //适配Android P及以后版本，否则报错
-        converter = new JcaPEMKeyConverter();
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
 
         Key key = null;
         if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
-            InputDecryptorProvider decProv = new JceOpenSSLPKCS8DecryptorProviderBuilder()
-                    .setProvider("BC")
+            XLog.e("PKCS#8 Encrypted key - we will use provided password");
+            InputDecryptorProvider decProv = new JcePKCSPBEInputDecryptorProviderBuilder()
                     .build(clientKeyPassword.toCharArray());
-            ((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv);
+            key = converter.getPrivateKey(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
         } else if (object instanceof PEMEncryptedKeyPair) {
-            XLog.e("Encrypted key - we will use provided password");
+            XLog.e("PKCS#1 Encrypted key - we will use provided password");
             PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder()
                     .build(clientKeyPassword.toCharArray());
             key = converter.getKeyPair(((PEMEncryptedKeyPair) object)
